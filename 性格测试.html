@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MBTI 性格测试</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;color:#eee}
+  .container{max-width:480px;margin:0 auto;padding:40px 20px 60px}
+  .page{animation:fadeUp .5s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  .hidden{display:none!important}
+  .hero{text-align:center;padding:60px 0 40px}
+  .hero-emoji{font-size:64px;margin-bottom:16px}
+  h1{font-size:30px;font-weight:800;letter-spacing:2px;margin-bottom:10px}
+  .hero-sub{font-size:14px;color:#8b9dc3;line-height:1.8}
+  .btn{display:block;width:100%;padding:16px;background:linear-gradient(135deg,#e94560,#c73650);color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;cursor:pointer;margin-top:16px;transition:transform .15s}
+  .btn:active{transform:scale(.96)}
+  .btn:disabled{opacity:.6}
+  .btn-ghost{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}
+  .tip{font-size:12px;color:#667;text-align:center;margin-top:14px}
+  .progress-track{height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-bottom:28px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#e94560,#ff6b6b);border-radius:3px;transition:width .35s ease}
+  .q-index{font-size:13px;color:#8b9dc3;margin-bottom:10px}
+  .q-text{font-size:19px;font-weight:700;line-height:1.7;margin-bottom:28px}
+  .option{display:flex;align-items:center;padding:18px 16px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.12);border-radius:14px;margin-bottom:14px;cursor:pointer;transition:all .15s;font-size:15px;line-height:1.6}
+  .option:active{background:rgba(233,69,96,.15);border-color:#e94560}
+  .option-letter{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);color:#cfd8e3;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-right:14px;flex-shrink:0}
+  .option.picked{background:rgba(233,69,96,.2);border-color:#e94560}
+  .option.picked .option-letter{background:#e94560;color:#fff}
+  .nav{display:flex;gap:12px;margin-top:22px}
+  .nav .btn{margin-top:0}
+  .loading{text-align:center;padding:100px 0}
+  .spinner{width:42px;height:42px;margin:0 auto 18px;border:4px solid rgba(255,255,255,.15);border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading p{color:#8b9dc3;font-size:14px}
+  .result-head{text-align:center;padding:20px 0 26px}
+  .result-label{font-size:13px;color:#8b9dc3;letter-spacing:4px;margin-bottom:14px}
+  .type-badge{font-size:56px;font-weight:800;letter-spacing:8px;background:linear-gradient(135deg,#e94560,#ff6b6b);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .type-name{font-size:26px;font-weight:700;margin-top:6px}
+  .type-en{font-size:14px;color:#8b9dc3;margin-top:6px}
+  .card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;margin-bottom:16px}
+  .card-title{font-size:15px;font-weight:700;color:#ff6b6b;margin-bottom:12px;padding-left:10px;border-left:3px solid #e94560}
+  .card-text{font-size:14px;line-height:2;color:#cfd8e3;text-align:justify;margin-bottom:10px}
+  .card-text:last-child{margin-bottom:0}
+  .source-tag{font-size:12px;color:#667;text-align:center;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="page" id="page-home">
+    <div class="hero">
+      <div class="hero-emoji">🧠</div>
+      <h1>MBTI 性格测试</h1>
+      <p class="hero-sub">12 道题 · 约 2 分钟<br>凭直觉选择，没有对错之分</p>
+    </div>
+    <button class="btn" onclick="startQuiz()">开始测试</button>
+    <p class="tip">测试结果仅供参考娱乐</p>
+  </div>
+
+  <div class="page hidden" id="page-quiz">
+    <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+    <div class="q-index" id="qIndex"></div>
+    <div class="q-text" id="qText"></div>
+    <div id="qOptions"></div>
+    <div class="nav">
+      <button class="btn btn-ghost hidden" id="btnPrev" onclick="prevQ()">上一题</button>
+      <button class="btn" id="btnNext" onclick="nextQ()">下一题</button>
+    </div>
+  </div>
+
+  <div class="page hidden" id="page-loading">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>正在分析你的性格…</p>
+    </div>
+  </div>
+
+  <div class="page hidden" id="page-result">
+    <div class="result-head">
+      <div class="result-label">YOUR PERSONALITY TYPE</div>
+      <div class="type-badge" id="rType"></div>
+      <div class="type-name" id="rName"></div>
+      <div class="type-en" id="rEn"></div>
+    </div>
+    <div class="source-tag" id="rSource"></div>
+    <div id="rBody"></div>
+    <button class="btn" onclick="retest()">再测一次</button>
+    <button class="btn btn-ghost" onclick="copyResult()">复制我的结果</button>
+  </div>
+
+</div>
+
+<script>
+var QUESTIONS=[
+{q:'处理许多事情上,你会喜欢',a:'凭兴所至行事',b:'按照计划行事',ia:'prqJ',ib:'Awzo',axis:'JP',aLetter:'P',bLetter:'J'},
+{q:'当你要在一个星期内完成一个大项目,你在开始时候会',a:'把要做的工作依次列出',b:'马上动工',ia:'6l7h',ib:'PjOx',axis:'JP',aLetter:'J',bLetter:'P'},
+{q:'总的说来,要做一个大型作业时,你会选',a:'边做边想该做什么',b:'首先把工作按步细分',ia:'NgMu',ib:'LAMI',axis:'JP',aLetter:'P',bLetter:'J'},
+{q:'下面每一对词语中,哪个词语更合你心意',a:'事实',b:'意念',ia:'ZNYs',ib:'ycx8',axis:'SN',aLetter:'S',bLetter:'N'},
+{q:'下面每一对词语中,哪个词语更合你心意',a:'富想象的',b:'以事论事',ia:'9Z8R',ib:'6N86',axis:'SN',aLetter:'N',bLetter:'S'},
+{q:'要做许多人也做的事,你比较喜欢',a:'按照一般认可的方法做',b:'构想一个自己的想法',ia:'WnXC',ib:'GuFm',axis:'SN',aLetter:'S',bLetter:'N'},
+{q:'在一大群人中,通常是',a:'你介绍大家认识',b:'别人介绍你',ia:'YeZd',ib:'jLiA',axis:'EI',aLetter:'E',bLetter:'I'},
+{q:'你认为别人一般',a:'需花很多时间才认识你',b:'用很短时间便认识你',ia:'atbm',ib:'KRJS',axis:'EI',aLetter:'I',bLetter:'E'},
+{q:'在社交聚会上,你会',a:'是说话很多的一个',b:'让别人多说话',ia:'qkpn',ib:'GKFB',axis:'EI',aLetter:'E',bLetter:'I'},
+{q:'下面每一对词语中,哪个词语更合你心意',a:'客观的',b:'热情的',ia:'EnDx',ib:'ckbg',axis:'TF',aLetter:'T',bLetter:'F'},
+{q:'要作决定时,你认为比较重要的是',a:'据事实衡量',b:'考虑他人的感受和意见',ia:'LwMS',ib:'cgbk',axis:'TF',aLetter:'T',bLetter:'F'},
+{q:'哪一个答案最贴切描绘你一般的感受或行为',a:'仁慈慷慨的',b:'意志坚定的',ia:'6l7t',ib:'J1Ib',axis:'TF',aLetter:'F',bLetter:'T'}
+];
+
+var API_KEY='9a02fa8c2ab3473e7817adbfd1b60427';
+var ANALYSIS_API='https://apis.juhe.cn/fapig/character_test/analysis';
+
+var TYPE_DATA={
+ISTJ:{name:'物流师',en:'Logistician',desc:['务实、严谨、有责任感，言出必行。擅长组织与执行，重视事实和细节，是值得信赖的实干家。','做事有条理、按规则办事，压力下依然能保持冷静和逻辑。有时显得过于严肃，对自己和他人要求都较高。']},
+ISFJ:{name:'守卫者',en:'Defender',desc:['温和、体贴、忠诚，乐于默默照顾他人。记忆力强，重视传统与责任，是团队中最可靠的支持者。','总是把别人的需求放在自己前面，容易过度劳累。需要学会为自己设界限，适当表达自己的想法。']},
+INFJ:{name:'提倡者',en:'Advocate',desc:['理想主义与行动力并存，洞察人心，富有同理心。追求意义与深度，坚持做有意义的事。','内心丰富但外表安静，对信念极其执着。容易因完美主义而疲惫，需要找到同频的人倾诉。']},
+INTJ:{name:'建筑师',en:'Architect',desc:['独立、理性、极具战略眼光。喜欢系统性思考，对知识有强烈渴望，是天生的规划者和创新者。','标准高、效率至上，不擅长无意义的社交。偶尔显得傲慢，其实只是把精力留给了真正重要的事。']},
+ISTP:{name:'鉴赏家',en:'Virtuoso',desc:['冷静、灵活、动手能力极强。喜欢探索事物原理，用理性分析解决实际问题，临危不乱。','追求自由不爱被束缚，表达感情较为含蓄。需要独处时间充电，讨厌繁琐的规矩和计划。']},
+ISFP:{name:'探险家',en:'Adventurer',desc:['敏感、友善、热爱当下。用审美和善意感受世界，温和随性，是身边人的治愈系存在。','不喜欢冲突和计划，随波逐流中保持内心的价值观。需要被鼓励才会展现真正的才华。']},
+INFP:{name:'调停者',en:'Mediator',desc:['理想主义、富有诗意和同理心。内心价值观坚定，总在寻找人与世界的美好可能。','外表安静内心炽热，容易内耗和自我怀疑。一旦找到使命，会展现出惊人的韧性。']},
+INTP:{name:'逻辑学家',en:'Logician',desc:['好奇、分析力强、追求真理。痴迷于概念和理论，享受拆解复杂问题的思维乐趣。','思维跳跃常常活在头脑中，对日常琐事缺乏耐心。需要独处来整理思绪，社交容易消耗能量。']},
+ESTP:{name:'企业家',en:'Entrepreneur',desc:['行动派、活在当下、精力充沛。善于随机应变和谈判，喜欢刺激与挑战，是团队的救火队员。','讨厌空谈和长线计划，凭直觉快速决策。偶尔冲动，需要有人提醒风险。']},
+ESFP:{name:'表演者',en:'Entertainer',desc:['热情、幽默、感染力强。热爱生活和人群，擅长营造快乐氛围，是朋友中的开心果。','注重当下体验，不喜欢抽象理论和长期规划。敏感于他人的评价，需要被关注和肯定。']},
+ENFP:{name:'竞选者',en:'Campaigner',desc:['热情似火、创意无限。善于发现可能性，真诚地关心他人，能把气氛和团队点燃。','兴趣广泛但容易三分钟热度，讨厌例行公事。需要自由空间，被束缚时会感到窒息。']},
+ENTP:{name:'辩论家',en:'Debater',desc:['机智、好奇、喜欢智力交锋。享受观点碰撞，善于发现新角度，是天生的创新者和辩手。','喜欢挑战规则和传统，对重复性事务极度缺乏耐心。说话直率，偶尔无意中得罪人。']},
+ESTJ:{name:'总经理',en:'Executive',desc:['果断、务实、天生的组织者。重视秩序与效率，说到做到，善于把目标拆解并推动落地。','原则性强，有时显得固执和不近人情。对低效率和含糊其辞缺乏耐心。']},
+ESFJ:{name:'执政官',en:'Consul',desc:['热心肠、责任感强、善于照顾他人。重视和谐与人情往来，是群体中的黏合剂。','在意他人看法，容易过度付出。面对冲突和批评时较为敏感，需要学会照顾自己。']},
+ENFJ:{name:'主人公',en:'Protagonist',desc:['富有魅力与感召力。善于理解和激励他人，天生的领导者和导师，充满理想与热忱。','过度关注他人成长而忽略自己，容易情感透支。需要学会接受自己的不完美。']},
+ENTJ:{name:'指挥官',en:'Commander',desc:['果断、目标导向、天生的领袖。善于制定战略并高效执行，不惧挑战，追求成就与卓越。','直率高效，有时显得强势和缺乏耐心。需要学会倾听，允许他人按自己的节奏成长。']}
+};
+
+var current=0;
+var picks=new Array(QUESTIONS.length).fill(null);
+
+function $(id){return document.getElementById(id)}
+function show(id){
+  ['page-home','page-quiz','page-loading','page-result'].forEach(function(p){$(p).classList.add('hidden')});
+  $(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function startQuiz(){
+  console.log('startQuiz called');
+  current=0;
+  picks=new Array(QUESTIONS.length).fill(null);
+  renderQ();
+  show('page-quiz');
+}
+
+function renderQ(){
+  var q=QUESTIONS[current];
+  $('qIndex').textContent='第 '+(current+1)+' / '+QUESTIONS.length+' 题';
+  $('qText').textContent=q.q;
+  $('progress').style.width=(current/QUESTIONS.length*100)+'%';
+  var box=$('qOptions');
+  box.innerHTML='';
+  [['a',q.a],['b',q.b]].forEach(function(pair){
+    var letter=pair[0],text=pair[1];
+    var div=document.createElement('div');
+    div.className='option'+(picks[current]===letter?' picked':'');
+    div.innerHTML='<div class="option-letter">'+letter.toUpperCase()+'</div><div>'+esc(text)+'</div>';
+    div.onclick=function(){pick(letter)};
+    box.appendChild(div);
+  });
+  $('btnPrev').classList.toggle('hidden',current===0);
+  var next=$('btnNext');
+  next.textContent=current===QUESTIONS.length-1?'提交答案':'下一题';
+  next.disabled=picks[current]===null;
+  next.style.opacity=picks[current]===null?'0.5':'1';
+}
+
+function pick(letter){
+  picks[current]=letter;
+  renderQ();
+}
+
+function prevQ(){if(current>0){current--;renderQ()}}
+
+function nextQ(){
+  if(picks[current]===null)return;
+  if(current<QUESTIONS.length-1){current++;renderQ()}
+  else{submit()}
+}
+
+function submit(){
+  show('page-loading');
+  var answers=QUESTIONS.map(function(q,i){return picks[i]==='a'?q.ia:q.ib});
+  var url=ANALYSIS_API+'?key='+encodeURIComponent(API_KEY)+'&answers='+answers.join(',');
+  fetch(url).then(function(resp){return resp.json()}).then(function(data){
+    if(data.error_code===0){renderApiResult(data.result)}
+    else{throw new Error(data.reason||'接口返回错误')}
+  }).catch(function(err){
+    console.log('API failed, fallback to local',err);
+    renderLocalResult();
+  });
+}
+
+function renderApiResult(r){
+  $('rType').textContent=r.alphabet||'';
+  $('rName').textContent=r.occupation||'';
+  $('rEn').textContent=r.vocabulary||'';
+  $('rSource').textContent='结果由聚合数据性格测试 API 生成';
+  var html='';
+  var sections=[{title:'性格概述',items:r.summarize},{title:'性格描述',items:r.desc}];
+  (r.characteristic||[]).forEach(function(c){sections.push({title:c.title,items:c.desc})});
+  sections.forEach(function(sec){
+    if(!sec.items||!sec.items.length)return;
+    html+='<div class="card"><div class="card-title">'+esc(sec.title)+'</div>';
+    sec.items.forEach(function(t){html+='<p class="card-text">'+esc(t)+'</p>'});
+    html+='</div>';
+  });
+  $('rBody').innerHTML=html;
+  currentResult={type:r.alphabet,name:r.occupation};
+  show('page-result');
+}
+
+function renderLocalResult(){
+  var score={EI:{E:0,I:0},SN:{S:0,N:0},TF:{T:0,F:0},JP:{J:0,P:0}};
+  QUESTIONS.forEach(function(q,i){
+    var letter=picks[i]==='a'?q.aLetter:q.bLetter;
+    score[q.axis][letter]++;
+  });
+  var type=(score.EI.E>=score.EI.I?'E':'I')+
+           (score.SN.S>=score.SN.N?'S':'N')+
+           (score.TF.T>=score.TF.F?'T':'F')+
+           (score.JP.J>=score.JP.P?'J':'P');
+  var info=TYPE_DATA[type];
+  $('rType').textContent=type;
+  $('rName').textContent=info.name;
+  $('rEn').textContent=info.en;
+  $('rSource').textContent='离线模式结果（网络受限时本地计算）';
+  var html='<div class="card"><div class="card-title">性格解析</div>';
+  info.desc.forEach(function(t){html+='<p class="card-text">'+esc(t)+'</p>'});
+  html+='</div>';
+  $('rBody').innerHTML=html;
+  currentResult={type:type,name:info.name};
+  show('page-result');
+}
+
+var currentResult=null;
+function retest(){show('page-home')}
+function copyResult(){
+  if(!currentResult)return;
+  var text='我的 MBTI 性格类型是 '+currentResult.type+'（'+currentResult.name+'）！快来测测你的～';
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){alert('结果已复制，连同这个页面一起发给朋友吧！')});
+  }else{
+    var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    alert('结果已复制，连同这个页面一起发给朋友吧！');
+  }
+}
+</script>
+</body>
+</html>
